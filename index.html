@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARC Raiders - Inventory Viewer</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .row-selected {
+            background: rgba(124, 58, 237, 0.18) !important;
+            border-left: 3px solid #7c3aed;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(60px) translateX(-50%); opacity: 0; }
+            to   { transform: translateY(0)    translateX(-50%); opacity: 1; }
+        }
+        #bulkProgressOverlay {
+            animation: none !important;
+        }
+
+        /* Token input styles */
+        .token-section {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 12px 20px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            border: 1px solid rgba(124, 58, 237, 0.3);
+        }
+        .token-label {
+            color: #a78bfa;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .token-input {
+            flex: 1;
+            min-width: 300px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(124, 58, 237, 0.5);
+            border-radius: 6px;
+            padding: 10px 15px;
+            color: white;
+            font-family: monospace;
+            font-size: 12px;
+            outline: none;
+        }
+        .token-input:focus {
+            border-color: #7c3aed;
+            box-shadow: 0 0 5px rgba(124, 58, 237, 0.5);
+        }
+        .token-status {
+            font-size: 12px;
+            padding: 5px 10px;
+            border-radius: 20px;
+        }
+        .token-status.valid {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            border: 1px solid #10b981;
+        }
+        .token-status.invalid {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: 1px solid #ef4444;
+        }
+        .btn-token {
+            background: linear-gradient(135deg, #7c3aed, #a78bfa);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        .btn-token:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
+        }
+        .btn-get-token {
+            background: rgba(124, 58, 237, 0.2);
+            border: 1px solid #7c3aed;
+            color: #a78bfa;
+        }
+        .btn-get-token:hover {
+            background: rgba(124, 58, 237, 0.4);
+        }
+
+        /* Button styles */
+        .btn-success {
+            background: linear-gradient(135deg, #10b981, #34d399);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-success:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f59e0b, #fbbf24);
+            color: #1a1a3a;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-warning:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+        }
+
+        .btn-warning:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Action buttons in table */
+        .actions-cell {
+            display: flex;
+            gap: 5px;
+        }
+
+        .btn-refresh-id {
+            background: rgba(251, 191, 36, 0.2);
+            border: 1px solid #fbbf24;
+            color: #fbbf24;
+            border-radius: 4px;
+            padding: 5px 8px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .btn-refresh-id:hover {
+            background: rgba(251, 191, 36, 0.4);
+        }
+
+        .btn-send-overflow {
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid #10b981;
+            color: #10b981;
+            border-radius: 4px;
+            padding: 5px 8px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .btn-send-overflow:hover {
+            background: rgba(16, 185, 129, 0.4);
+        }
+
+        /* Section headers */
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(124, 58, 237, 0.3);
+        }
+        .section-header h2 {
+            margin: 0;
+            font-size: 20px;
+            color: #e0e0e0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .badge {
+            background: rgba(124, 58, 237, 0.3);
+            color: #a78bfa;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: normal;
+        }
+        
+        /* Equipped section */
+        .equipped-section {
+            margin-bottom: 30px;
+        }
+        .equipped-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+        }
+        .equipped-slot {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 12px;
+            border: 1px solid rgba(124, 58, 237, 0.2);
+        }
+        .slot-label {
+            color: #a78bfa;
+            font-size: 12px;
+            margin-bottom: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .equipped-item-card {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+            background: rgba(124, 58, 237, 0.1);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid rgba(124, 58, 237, 0.3);
+        }
+        .equipped-item-card:hover {
+            background: rgba(124, 58, 237, 0.2);
+            border-color: #7c3aed;
+        }
+        .equipped-item-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 6px;
+        }
+        .equipped-item-icon img {
+            max-width: 36px;
+            max-height: 36px;
+            object-fit: contain;
+        }
+        .equipped-item-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .equipped-item-name {
+            color: #e0e0e0;
+            font-size: 13px;
+            font-weight: bold;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .equipped-item-category {
+            color: #a78bfa;
+            font-size: 10px;
+        }
+        .btn-refresh-equipped {
+            background: rgba(251, 191, 36, 0.2);
+            border: 1px solid #fbbf24;
+            color: #fbbf24;
+            border-radius: 4px;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+        .btn-refresh-equipped:hover {
+            background: rgba(251, 191, 36, 0.4);
+        }
+        .empty-slot {
+            padding: 20px;
+            text-align: center;
+            color: #666;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            border: 1px dashed rgba(124, 58, 237, 0.3);
+            font-size: 13px;
+        }
+        
+        /* Backpack section */
+        .backpack-section {
+            margin-bottom: 30px;
+        }
+        .inventory-section {
+            margin-top: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .equipped-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .controls {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="header" style="justify-content: space-between; display: flex; align-items: center; flex-wrap: wrap;">
+            <div class="logo">
+                <span class="logo-icon">🎮</span>
+                <h1>ARC Raiders Inventory</h1>
+            </div>
+            <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap; margin-top: 5px;">
+                
+                <div class="header-stats" id="stats">Enter your token to start</div>
+            </div>
+        </div>
+
+        <div class="token-section">
+            <span class="token-label">🔑 Bearer Token:</span>
+            <input type="text" id="tokenInput" class="token-input" placeholder="Paste your JWT token here...">
+            <button id="setTokenBtn" class="btn-token">✅ Set Token</button>
+
+            <span id="tokenStatus" class="token-status"></span>
+        </div>
+
+        <div class="controls">
+            <button id="refreshBtn" class="btn btn-primary">
+                <span class="btn-icon">🔄</span> Refresh
+            </button>
+            <button id="refreshAllBackpackBtn" class="btn-success">
+                <span class="btn-icon">🎒</span> Refresh Backpack & Equipped
+            </button>
+            <button id="sendBackpackToOverflowBtn" class="btn-warning">
+                <span class="btn-icon">📤</span> Send Backpack to Overflow
+            </button>
+            <!-- Add this near your other backpack buttons -->
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <button id="dupeBackpackBtn" class="btn" style="background: linear-gradient(135deg, #f59e0b, #fbbf24); color: #1a1a3a;">
+                    <span class="btn-icon">📦✨</span> Dupe Backpack
+                </button>
+                <input type="number" id="dupeCount" min="1" max="100" value="1" 
+                    style="width: 70px; padding: 8px; border-radius: 6px; border: 1px solid #7c3aed; 
+                            background: #1a1a3a; color: white; text-align: center; font-weight: bold;">
+                <span style="color: #a78bfa; font-size: 12px;">times</span>
+            </div>
+            <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="searchInput" placeholder="Search by name or ID...">
+            </div>
+            <div class="sort-box">
+                <label>Sort by:</label>
+                <select id="sortBy">
+                    <option value="name">Name</option>
+                    <option value="amount">Amount</option>
+                    <option value="date">Date</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="loading" class="loading" style="display: none;">
+            <div class="spinner"></div>
+            <p>Loading inventory...</p>
+        </div>
+
+        <div id="inventoryGrid" class="inventory-container"></div>
+        <div id="errorMessage" class="error-message" style="display: none;"></div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
